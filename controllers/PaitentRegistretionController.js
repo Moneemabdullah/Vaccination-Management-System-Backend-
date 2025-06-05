@@ -2,8 +2,7 @@ const User = require("../models/UserModels");
 const PatientProfile = require("../models/PaitentProfile");
 
 exports.registerPatient = async (req, res) => {
-    const { name, email, password, dateOfBirth, medicalHistory, role } =
-        req.body;
+    const { name, email, password, dateOfBirth, role } = req.body;
 
     try {
         // Check if user already exists
@@ -25,9 +24,6 @@ exports.registerPatient = async (req, res) => {
         const patientProfile = new PatientProfile({
             user: newUser._id,
             dateOfBirth,
-            medicalHistory,
-            vaccinationHistory: [], // optional, can be added later
-            appointments: [],
         });
         await patientProfile.save();
 

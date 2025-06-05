@@ -12,16 +12,6 @@ const patientProfileSchema = new mongoose.Schema({
             ref: "Vaccination",
         },
     ],
-    medicalHistory: {
-        type: String,
-        required: true,
-    },
-    appointments: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Appointment",
-        },
-    ],
 });
 
 module.export = mongoose.model("PatientProfile", patientProfileSchema);

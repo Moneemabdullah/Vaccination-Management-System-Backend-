@@ -3,23 +3,17 @@ const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
     {
-        name: {
-            type: String,
-            required: true,
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-        },
-        password: {
-            type: String,
-            required: true,
-        },
+        name: { type: String, required: true },
+        email: { type: String, required: true, unique: true },
+        password: { type: String, required: true },
         roles: {
             type: [String],
             enum: ["Doctor", "Patient", "Admin"],
-            default: [""],
+            default: [],
+        },
+        profilePicture: {
+            type: String,
+            default: "default-profile-picture.png",
         },
     },
     { timestamps: true }
@@ -31,4 +25,4 @@ userSchema.pre("save", async function (next) {
     next();
 });
 
-module.export = mongoose.model("User", userSchema);
+module.exports = mongoose.model("User", userSchema);

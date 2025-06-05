@@ -7,6 +7,7 @@ const cors = require("cors");
 
 // routes import
 const RegistrationRoutes = require("./routes/RegistretionRoutes");
+const LandingPageRoutes = require("./routes/LandingPageRoute");
 
 // DB connection...
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(cors());
 
 // Routes
 app.use("/api/Registretion", RegistrationRoutes);
+app.use("/api/landingPage", LandingPageRoutes);
 
 // Start the server..
 const PORT = process.env.PORT;

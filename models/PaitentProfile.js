@@ -24,7 +24,4 @@ const patientProfileSchema = new mongoose.Schema({
     ],
 });
 
-export const PatientProfile = mongoose.model(
-    "PatientProfile",
-    patientProfileSchema
-);
+module.export = mongoose.model("PatientProfile", patientProfileSchema);

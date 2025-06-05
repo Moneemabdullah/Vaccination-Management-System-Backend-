@@ -23,4 +23,4 @@ const vaccinationSchema = new mongoose.Schema({
     },
 });
 
-export const Vaccination = mongoose.model("Vaccination", vaccinationSchema);
+module.export = mongoose.model("Vaccination", vaccinationSchema);

@@ -3,6 +3,10 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 
 const connectDb = require("./.config/connectDB");
+const cors = require("cors");
+
+// routes import
+const RegistrationRoutes = require("./routes/RegistretionRoutes");
 
 // DB connection...
 dotenv.config();
@@ -13,9 +17,10 @@ const app = express();
 // middlewere
 
 app.use(express.json());
-// app.use(cors());
+app.use(cors());
 
 // Routes
+app.use("/api/Registretion", RegistrationRoutes);
 
 // Start the server..
 const PORT = process.env.PORT;

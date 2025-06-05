@@ -6,12 +6,10 @@ const doctorProfileSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    experience: [
-        {
-            type: Number,
-            required: true,
-        },
-    ],
+    experience: {
+        type: Number,
+        required: true,
+    },
     qualifications: [
         {
             type: String,
@@ -30,10 +28,13 @@ const doctorProfileSchema = new mongoose.Schema({
             ref: "Appointment",
         },
     ],
-    workingDays: [],
+    workingDays: [
+        {
+            day: { type: String },
+            startTime: { type: String },
+            endTime: { type: String },
+        },
+    ],
 });
 
-export const DoctorProfile = mongoose.model(
-    "DoctorProfile",
-    doctorProfileSchema
-);
+module.export = mongoose.model("DoctorProfile", doctorProfileSchema);

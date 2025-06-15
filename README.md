@@ -140,15 +140,3 @@ Uses node-cron to send email reminders to doctors and patients daily for upcomin
 📖 License
 MIT License © 2025 Moneem Abdullah
 
-yaml
-Copy code
-
----
-
-Let me know if you’d like me to:
-
--   Add frontend info (if available)
--   Include sample `.env`
--   Auto-generate API docs with Swagger
-
-I'll gladly help!

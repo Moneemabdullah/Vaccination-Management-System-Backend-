@@ -5,9 +5,9 @@ const {
     addVaccine,
     getDoctors,
 } = require("../controllers/adminController");
-const { authMiddleware, adminOnly } = require("../middleware/authMiddleware");
+// const { authMiddleware, adminOnly } = require("../middleware/authMiddleware");
 
-router.use(authMiddleware, adminOnly);
+// router.use(authMiddleware, adminOnly);
 
 router.put("/approve-doctor/:id", approveDoctor);
 router.post("/vaccine", addVaccine);

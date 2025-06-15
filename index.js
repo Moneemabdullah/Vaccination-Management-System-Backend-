@@ -17,6 +17,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/doctor", require("./routes/doctorRoutes"));
 app.use("/api/patient", require("./routes/patientRoutes"));
+app.use("/api/landingPage", require("./routes/landingPageRoutes"));
 
 app.get("/", (req, res) => res.send("Vaccination Management API"));
 
@@ -26,9 +27,9 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: "Something went wrong!" });
 });
 
-app.use((req, res) => {
-    res.status(404).json({ error: "API route not found" });
-});
+// app.use((req, res) => {
+//     res.status(404).json({ error: "API route not found" });
+// });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

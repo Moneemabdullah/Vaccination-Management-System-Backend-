@@ -6,9 +6,9 @@ const {
     getPatientMedicalHistory,
 } = require("../controllers/doctorController");
 
-const { authMiddleware, doctorOnly } = require("../middleware/authMiddleware");
+// const { authMiddleware, doctorOnly } = require("../middleware/authMiddleware");
 
-router.use(authMiddleware, doctorOnly);
+// router.use(authMiddleware, doctorOnly);
 
 // GET all appointments
 router.get("/appointments", getAppointments);

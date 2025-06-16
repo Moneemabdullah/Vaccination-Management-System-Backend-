@@ -89,6 +89,7 @@ Auth APIs
 
 <pre>
 POST /api/auth/register
+POST /api/auth/doc/register
 
 POST /api/auth/login
 </pre>
@@ -139,4 +140,3 @@ Uses node-cron to send email reminders to doctors and patients daily for upcomin
 
 📖 License
 MIT License © 2025 Moneem Abdullah
-

@@ -17,6 +17,10 @@ const doctorProfileSchema = new mongoose.Schema({
             endTime: { type: String },
         },
     ],
+    profilePhoto: {
+        type: String,
+        default: null,
+    },
 });
 
 module.exports = mongoose.model("DoctorProfile", doctorProfileSchema);

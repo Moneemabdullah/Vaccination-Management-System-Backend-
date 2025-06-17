@@ -10,8 +10,6 @@ const userSchema = new mongoose.Schema({
     name: String,
     email: { type: String, unique: true },
     password: String,
-    isApproved: { type: Boolean, default: false }, // For doctors
-    rating: { type: Number, default: 0 },
 });
 
 userSchema.pre("save", async function (next) {

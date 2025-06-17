@@ -26,13 +26,21 @@ exports.register = async (req, res) => {
 };
 
 const bcrypt = require("bcrypt");
-const Doctor = require("../models/Doctor");
+const Doctor = require("../models/DoctorProfile");
 
 exports.docRegister = async (req, res) => {
     try {
-        const { name, email, password, specialization, qualifications } =
-            req.body;
+        const {
+            name,
+            email,
+            password,
+            specialization,
+            qualifications,
+            experience,
+            certifications,
+        } = req.body;
 
+        // Validate required fields
         if (
             !name ||
             !email ||
@@ -43,46 +51,65 @@ exports.docRegister = async (req, res) => {
             return res.status(400).json({ error: "All fields are required" });
         }
 
-        const existingDoctor = await Doctor.findOne({ email });
-        if (existingDoctor) {
-            return res
-                .status(400)
-                .json({ error: "Doctor already exists with this email" });
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({
+                error: "User already exists with this email",
+            });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const profilePhoto = req.file ? req.file.path : null;
-
-        const newDoctor = new Doctor({
+        // Create user entry
+        const newUser = new User({
             name,
             email,
-            password: hashedPassword,
+            password,
+            role: "doctor",
+        });
+        await newUser.save();
+
+        // Upload profile photo if exists
+        const profilePhoto = req.file ? req.file.path : null;
+
+        // Create doctor profile entry
+        const newDoctorProfile = new DoctorProfile({
+            user: newUser._id,
             specialization,
-            qualifications,
+            qualifications: Array.isArray(qualifications)
+                ? qualifications
+                : qualifications.split(",").map((q) => q.trim()),
+            certifications: certifications
+                ? Array.isArray(certifications)
+                    ? certifications
+                    : certifications.split(",").map((c) => c.trim())
+                : [],
+            experience,
             profilePhoto,
-            isApproved: false, // default state before admin approval
+            isApproved: false, // default: needs admin approval
         });
 
-        await newDoctor.save();
+        await newDoctorProfile.save();
 
+        // Generate JWT
         const token = jwt.sign(
-            { id: newDoctor._id, role: "doctor" },
+            { id: newUser._id, role: "doctor" },
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );
 
         res.status(201).json({
-            message: "Doctor registered successfully",
+            message: "Doctor registered successfully. Pending approval.",
             token,
             doctor: {
-                id: newDoctor._id,
-                name: newDoctor.name,
-                email: newDoctor.email,
-                specialization: newDoctor.specialization,
-                qualifications: newDoctor.qualifications,
-                profilePhoto: newDoctor.profilePhoto,
-                isApproved: newDoctor.isApproved,
+                id: newUser._id,
+                name: newUser.name,
+                email: newUser.email,
+                specialization: newDoctorProfile.specialization,
+                qualifications: newDoctorProfile.qualifications,
+                certifications: newDoctorProfile.certifications,
+                experience: newDoctorProfile.experience,
+                profilePhoto: newDoctorProfile.profilePhoto,
+                isApproved: newDoctorProfile.isApproved,
             },
         });
     } catch (err) {
@@ -90,8 +117,6 @@ exports.docRegister = async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
-
-module.exports = { register };
 
 exports.login = async (req, res) => {
     try {

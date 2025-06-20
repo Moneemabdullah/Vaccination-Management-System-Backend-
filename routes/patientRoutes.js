@@ -3,8 +3,6 @@ const router = express.Router();
 const {
     bookAppointment,
     getMyAppointments,
-    getApprovedDoctors,
-    getVaccines,
     updateMedicalHistory,
     getMyMedicalHistory,
 } = require("../controllers/patientController");

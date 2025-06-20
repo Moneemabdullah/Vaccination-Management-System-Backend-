@@ -28,3 +28,27 @@ exports.getDoctors = async (req, res) => {
     const doctors = await User.find({ role: "doctor" });
     res.json(doctors);
 };
+
+exports.removeDoctor = async (req, res) => {
+    try {
+        const doctor = await User.findByIdAndDelete(req.params.id);
+        if (!doctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+        res.json({ message: "Doctor removed successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.deleteVaccine = async (req, res) => {
+    try {
+        const vaccine = await Vaccine.findByIdAndDelete(req.params.id);
+        if (!vaccine) {
+            return res.status(404).json({ message: "Vaccine not found" });
+        }
+        res.json({ message: "Vaccine deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

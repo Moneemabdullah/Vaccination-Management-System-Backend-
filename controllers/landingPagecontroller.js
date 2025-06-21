@@ -1,6 +1,6 @@
 const User = require("../models/User");
 const Vaccine = require("../models/Vaccine");
-const Appinments = require("../models/Appointment");
+const Appointments = require("../models/Appointment");
 
 exports.getApprovedDoctors = async (req, res) => {
     try {
@@ -26,12 +26,15 @@ exports.getVaccines = async (req, res) => {
 
 exports.herocardController = async (req, res) => {
     try {
-        const numberOfappoinments = Appinments.countDocuments;
-        const numberOfPaitent = User.countDocuments;
-        const numberOfVaccins = Vaccine.countDocuments;
+        const [numberOfAppointments, numberOfPatients, numberOfVaccines] =
+            await Promise.all([
+                Appointments.countDocuments(),
+                User.countDocuments(),
+                Vaccine.countDocuments(),
+            ]);
 
-        res.json({ numberOfPaitent, numberOfVaccins, numberOfappoinments });
+        res.json({ numberOfPatients, numberOfVaccines, numberOfAppointments });
     } catch (error) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: error.message });
     }
 };

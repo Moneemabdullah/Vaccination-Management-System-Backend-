@@ -13,11 +13,13 @@ const {
 // router.use(authMiddleware, adminOnly);
 
 router.put("/approve-doctor/:id", approveDoctor);
-router.post("/vaccine", addVaccine);
-router.delete("/vaccine/:id", deleteVaccine);
-
-router.get("/doctors", getDoctors);
 router.delete("/remove-doctor/:id", removeDoctor);
-router.get("/all-numbers", allnumbersControllers);
+router.get("/doctors", getDoctors);
 
+// Vaccine
+router.post("/add-vaccine", addVaccine);
+router.delete("/delete-vaccine/:id", deleteVaccine);
+
+// Dashboard numbers
+router.get("/all-numbers", allnumbersControllers);
 module.exports = router;

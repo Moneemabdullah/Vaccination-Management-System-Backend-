@@ -6,6 +6,7 @@ const {
     getDoctors,
     removeDoctor,
     deleteVaccine,
+    allnumbersControllers,
 } = require("../controllers/adminController");
 // const { authMiddleware, adminOnly } = require("../middleware/authMiddleware");
 
@@ -17,5 +18,6 @@ router.delete("/vaccine/:id", deleteVaccine);
 
 router.get("/doctors", getDoctors);
 router.delete("/remove-doctor/:id", removeDoctor);
+router.get("/all-numbers", allnumbersControllers);
 
 module.exports = router;

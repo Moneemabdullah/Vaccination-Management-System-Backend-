@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Vaccine = require("../models/Vaccine");
+const Appointment = require("../models/Appointment");
 
 exports.approveDoctor = async (req, res) => {
     try {
@@ -48,6 +49,26 @@ exports.deleteVaccine = async (req, res) => {
             return res.status(404).json({ message: "Vaccine not found" });
         }
         res.json({ message: "Vaccine deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.allnumbersControllers = async (req, res) => {
+    try {
+        const totalPatients = await User.countDocuments({ role: "patient" });
+        const totalDoctors = await User.countDocuments({ role: "doctor" });
+        const totalVaccines = await Vaccine.countDocuments();
+        const totalAppointments = await Appointment.countDocuments();
+        const totalUsers = await User.countDocuments();
+
+        res.json({
+            totalPatients,
+            totalDoctors,
+            totalVaccines,
+            totalAppointments,
+            totalUsers,
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

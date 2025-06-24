@@ -3,7 +3,7 @@ const User = require("../models/User");
 const Vaccine = require("../models/Vaccine");
 const MedicalHistory = require("../models/MedicalHistory");
 const sendEmail = require("../utils/sendEmail");
-const patientProfile = require("../models/PatientProfile");
+const patientProfile = require("../models/PaitentProfile");
 
 // Book an appointment
 exports.bookAppointment = async (req, res) => {

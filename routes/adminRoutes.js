@@ -7,6 +7,8 @@ const {
     removeDoctor,
     deleteVaccine,
     allnumbersControllers,
+    getDoctorById,
+    getVaccineById,
 } = require("../controllers/adminController");
 // const { authMiddleware, adminOnly } = require("../middleware/authMiddleware");
 
@@ -15,11 +17,13 @@ const {
 router.put("/approve-doctor/:id", approveDoctor);
 router.delete("/remove-doctor/:id", removeDoctor);
 router.get("/doctors", getDoctors);
+router.get("/doctor/:id", getDoctorById);
 
 // Vaccine
 router.post("/add-vaccine", addVaccine);
 router.delete("/delete-vaccine/:id", deleteVaccine);
-router.delete("/delete-doctor/:id", removeDoctor);
+router.get("/get-a-vaccine/:id", getVaccineById);
+router.get;
 
 // Dashboard numbers
 router.get("/all-numbers", allnumbersControllers);

@@ -16,6 +16,16 @@ exports.approveDoctor = async (req, res) => {
         if (!doctor) {
             return res.status(404).json({ message: "Doctor not found" });
         }
+
+        // send acceptance email
+        const emailContent = `Dear ${doctor.name},
+        Your application to become a doctor has been approved. You can now log in and start managing your appointments.`;
+        await User.sendEmail(
+            doctor.email,
+            "Doctor Application Approved",
+            emailContent
+        );
+
         res.status(200).json(doctor);
     } catch (err) {
         res.status(500).json({ error: err.message });

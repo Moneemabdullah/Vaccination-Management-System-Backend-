@@ -30,27 +30,12 @@ const Doctor = require("../models/DoctorProfile");
 
 exports.docRegister = async (req, res) => {
     try {
-        const {
-            name,
-            email,
-            password,
-            specialization,
-            qualifications,
-            experience,
-            certifications,
-        } = req.body;
+        const { name, email, password } = req.body;
 
         // Validate required fields
-        if (
-            !name ||
-            !email ||
-            !password ||
-            !specialization ||
-            !qualifications
-        ) {
+        if (!name || !email || !password) {
             return res.status(400).json({ error: "All fields are required" });
         }
-
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -58,7 +43,6 @@ exports.docRegister = async (req, res) => {
                 error: "User already exists with this email",
             });
         }
-
         // Create user entry
         const newUser = new User({
             name,
@@ -67,36 +51,12 @@ exports.docRegister = async (req, res) => {
             role: "doctor",
         });
         await newUser.save();
-
-        // Upload profile photo if exists
-        const profilePhoto = req.file ? req.file.path : null;
-
-        // Create doctor profile entry
-        const newDoctorProfile = new DoctorProfile({
-            user: newUser._id,
-            specialization,
-            qualifications: Array.isArray(qualifications)
-                ? qualifications
-                : qualifications.split(",").map((q) => q.trim()),
-            certifications: certifications
-                ? Array.isArray(certifications)
-                    ? certifications
-                    : certifications.split(",").map((c) => c.trim())
-                : [],
-            experience,
-            profilePhoto,
-            isApproved: false, // default: needs admin approval
-        });
-
-        await newDoctorProfile.save();
-
         // Generate JWT
         const token = jwt.sign(
             { id: newUser._id, role: "doctor" },
             process.env.JWT_SECRET,
-            { expiresIn: "7d" }
+            { expiresIn: "1d" }
         );
-
         res.status(201).json({
             message: "Doctor registered successfully. Pending approval.",
             token,
@@ -104,12 +64,7 @@ exports.docRegister = async (req, res) => {
                 id: newUser._id,
                 name: newUser.name,
                 email: newUser.email,
-                specialization: newDoctorProfile.specialization,
-                qualifications: newDoctorProfile.qualifications,
-                certifications: newDoctorProfile.certifications,
-                experience: newDoctorProfile.experience,
-                profilePhoto: newDoctorProfile.profilePhoto,
-                isApproved: newDoctorProfile.isApproved,
+                isApproved: false,
             },
         });
     } catch (err) {
@@ -123,6 +78,11 @@ exports.login = async (req, res) => {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
         if (!user || !(await user.comparePassword(password))) {
+            if (user.role === "doctor" && !user.isApproved) {
+                return res.status(403).json({
+                    error: "Doctor account is pending approval by admin",
+                });
+            }
             return res.status(401).json({ error: "Invalid credentials" });
         }
         const token = jwt.sign(

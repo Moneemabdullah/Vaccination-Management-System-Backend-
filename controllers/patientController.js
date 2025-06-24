@@ -3,6 +3,7 @@ const User = require("../models/User");
 const Vaccine = require("../models/Vaccine");
 const MedicalHistory = require("../models/MedicalHistory");
 const sendEmail = require("../utils/sendEmail");
+const patientProfile = require("../models/PatientProfile");
 
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
@@ -75,6 +76,39 @@ exports.getMyMedicalHistory = async (req, res) => {
             patient: req.user._id,
         }).populate("vaccinationHistory.vaccine", "name");
         res.json(history || {});
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getMyProfile = async (req, res) => {
+    try {
+        const patient = await patientProfile
+            .findOne({ user: req.user._id })
+            .populate("user", "name email")
+            .populate("vaccinationHistory.vaccine", "name");
+        if (!patient) {
+            return res
+                .status(404)
+                .json({ message: "Patient profile not found" });
+        }
+        res.json(patient);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Update own profile
+exports.updateMyProfile = async (req, res) => {
+    try {
+        const patient = await patientProfile
+            .findOneAndUpdate({ user: req.user._id }, req.body, {
+                new: true,
+                upsert: true,
+            })
+            .populate("user", "name email")
+            .populate("vaccinationHistory.vaccine", "name");
+        res.json(patient);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

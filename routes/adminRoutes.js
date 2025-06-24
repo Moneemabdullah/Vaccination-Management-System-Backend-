@@ -9,6 +9,7 @@ const {
     allnumbersControllers,
     getDoctorById,
     getVaccineById,
+    getAllUsers,
 } = require("../controllers/adminController");
 // const { authMiddleware, adminOnly } = require("../middleware/authMiddleware");
 
@@ -28,3 +29,6 @@ router.get;
 // Dashboard numbers
 router.get("/all-numbers", allnumbersControllers);
 module.exports = router;
+
+// All Users deta route
+router.get("/all-users", getAllUsers);

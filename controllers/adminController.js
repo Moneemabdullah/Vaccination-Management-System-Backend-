@@ -135,3 +135,19 @@ exports.allnumbersControllers = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+/**
+ * Get all all users
+ */
+
+exports.getAllUsers = async (req, res) => {
+    try {
+        const allUser = await User.find();
+        if (!allUser) {
+            return res.status(404).json({ message: "No users found" });
+        }
+        res.status(200).json(allUser);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

@@ -24,11 +24,10 @@ router.get("/doctor/:id", getDoctorById);
 router.post("/add-vaccine", addVaccine);
 router.delete("/delete-vaccine/:id", deleteVaccine);
 router.get("/get-a-vaccine/:id", getVaccineById);
-router.get;
 
 // Dashboard numbers
 router.get("/all-numbers", allnumbersControllers);
-module.exports = router;
 
 // All Users deta route
 router.get("/all-users", getAllUsers);
+module.exports = router;

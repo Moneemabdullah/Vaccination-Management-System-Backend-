@@ -19,6 +19,7 @@ router.get("/doctors", getDoctors);
 // Vaccine
 router.post("/add-vaccine", addVaccine);
 router.delete("/delete-vaccine/:id", deleteVaccine);
+router.delete("/delete-doctor/:id", removeDoctor);
 
 // Dashboard numbers
 router.get("/all-numbers", allnumbersControllers);

@@ -35,7 +35,7 @@ exports.bookAppointment = async (req, res) => {
          <p>Your appointment with Dr. ${doctor.name} has been requested for ${date}.</p>`
         );
 
-        res.status(201).json(appointment); // ⬅️ final response here
+        res.status(201).json(appointment);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

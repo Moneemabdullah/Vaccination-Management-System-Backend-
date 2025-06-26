@@ -6,10 +6,6 @@ const patientProfileSchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
-    profilePicture: {
-        type: String,
-        default: "default-profile-picture.png",
-    },
     vaccinationHistory: [
         {
             type: mongoose.Schema.Types.ObjectId,

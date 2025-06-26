@@ -1,99 +1,213 @@
-const User = require("../models/User");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+const DoctorProfile = require("../models/DoctorProfile");
+const PatientProfile = require("../models/PaitentProfile");
 
+// Register for generic users (e.g., patient)
 exports.register = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, dateOfBirth, role } = req.body;
 
-        if (!name || !email || !password || !role) {
+        if (!name || !email || !password || !role || !dateOfBirth) {
             return res
                 .status(400)
-                .json({ error: "Please provide all required fields" });
+                .json({ error: "Please provide all required fields." });
         }
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ error: "Email already registered" });
-        }
-
-        const user = new User({ name, email, password, role });
-        await user.save();
-
-        res.status(201).json({ message: "Registered successfully" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-const bcrypt = require("bcrypt");
-const Doctor = require("../models/DoctorProfile");
-
-exports.docRegister = async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-
-        // Validate required fields
-        if (!name || !email || !password) {
-            return res.status(400).json({ error: "All fields are required" });
-        }
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
+        if (role !== "patient") {
             return res.status(400).json({
-                error: "User already exists with this email",
+                error: "Only patients can register through this route.",
             });
         }
-        // Create user entry
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "Email already registered." });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
             name,
             email,
-            password,
-            role: "doctor",
+            password: hashedPassword,
+            role,
         });
         await newUser.save();
-        // Generate JWT
+
+        const patientProfile = new PatientProfile({
+            user: newUser._id,
+            dateOfBirth,
+        });
+
+        await patientProfile.save();
+
         const token = jwt.sign(
-            { id: newUser._id, role: "doctor" },
+            { id: newUser._id, role: newUser.role },
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
+
         res.status(201).json({
-            message: "Doctor registered successfully. Pending approval.",
+            message: "Patient registered successfully",
+            token,
+            user: {
+                id: newUser._id,
+                name: newUser.name,
+                email: newUser.email,
+                role: newUser.role,
+                dateOfBirth: patientProfile.dateOfBirth,
+            },
+        });
+    } catch (err) {
+        console.error("Patient registration error:", err);
+        res.status(500).json({
+            error: "Server error. Please try again later.",
+        });
+    }
+};
+
+// Doctor Registration
+exports.docRegister = async (req, res) => {
+    try {
+        const {
+            name,
+            email,
+            password,
+            specialization,
+            experience,
+            qualifications,
+            certifications,
+            workingDays,
+        } = req.body;
+
+        // Handle multipart/form-data
+        const profilePhoto = req.file?.filename || req.body.profilePhoto;
+        const parsedQualifications = Array.isArray(qualifications)
+            ? qualifications
+            : qualifications?.split(",").map((q) => q.trim()) || [];
+
+        const parsedCertifications = Array.isArray(certifications)
+            ? certifications
+            : certifications?.split(",").map((c) => c.trim()) || [];
+
+        const parsedWorkingDays = Array.isArray(workingDays)
+            ? workingDays
+            : workingDays
+            ? JSON.parse(workingDays)
+            : [];
+
+        if (!name || !email || !password || !specialization) {
+            return res.status(400).json({
+                error: "Name, email, password, and specialization are required.",
+            });
+        }
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res
+                .status(409)
+                .json({ error: "User already exists with this email." });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({
+            name,
+            email,
+            password: hashedPassword,
+            role: "doctor",
+        });
+        await newUser.save();
+
+        const doctorProfile = new DoctorProfile({
+            user: newUser._id,
+            specialization,
+            experience: experience || 0,
+            qualifications: parsedQualifications,
+            certifications: parsedCertifications,
+            workingDays: parsedWorkingDays,
+            profilePicture: profilePicture || null,
+            isApproved: false,
+            rating: 0,
+        });
+
+        await doctorProfile.save();
+
+        const token = jwt.sign(
+            { id: newUser._id, role: newUser.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
+        res.status(201).json({
+            message: "Doctor registered successfully. Awaiting admin approval.",
             token,
             doctor: {
                 id: newUser._id,
                 name: newUser.name,
                 email: newUser.email,
-                isApproved: false,
+                specialization: doctorProfile.specialization,
+                isApproved: doctorProfile.isApproved,
             },
         });
     } catch (err) {
-        console.error("Doctor registration failed:", err);
-        res.status(500).json({ error: "Server error" });
+        console.error("Doctor registration error:", err);
+        res.status(500).json({
+            error: "Server error. Please try again later.",
+        });
     }
 };
 
+// Login for all users
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res
+                .status(400)
+                .json({ error: "Email and password are required." });
+        }
+
         const user = await User.findOne({ email });
-        if (!user || !(await user.comparePassword(password))) {
-            if (user.role === "doctor" && !user.isApproved) {
-                return res.status(403).json({
-                    error: "Doctor account is pending approval by admin",
-                });
-            }
+        if (!user) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+
+        if (user.role === "doctor") {
+            const profile = await DoctorProfile.findOne({ user: user._id });
+            if (!profile?.isApproved) {
+                return res.status(403).json({
+                    error: "Doctor account is pending approval by admin.",
+                });
+            }
+        }
+
         const token = jwt.sign(
             { id: user._id, role: user.role },
             process.env.JWT_SECRET,
-            {
-                expiresIn: "1d",
-            }
+            { expiresIn: "1d" }
         );
-        res.json({ token, role: user.role });
+
+        res.json({
+            token,
+            role: user.role,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            },
+        });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Login error:", err);
+        res.status(500).json({
+            error: "Server error. Please try again later.",
+        });
     }
 };

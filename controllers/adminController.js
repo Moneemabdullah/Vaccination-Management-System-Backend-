@@ -1,31 +1,36 @@
 const User = require("../models/User");
 const Vaccine = require("../models/Vaccine");
-const doctors = require("../models/DoctorProfile");
+const DoctorProfile = require("../models/DoctorProfile");
 const Appointment = require("../models/Appointment");
+const sendEmail = require("../utils/sendEmail");
 
-/**
- * Approve a doctor by ID
- * PUT /api/admin/approve-doctor/:id
- */
+// Approve a doctor
 exports.approveDoctor = async (req, res) => {
     try {
-        const doctor = await User.findByIdAndUpdate(
+        console.log(
+            "Received request to approve doctor with ID:",
+            req.params.id
+        );
+
+        const doctor = await DoctorProfile.findByIdAndUpdate(
             req.params.id,
             { isApproved: true },
             { new: true }
-        );
+        ).populate("user");
+
         if (!doctor) {
             return res.status(404).json({ message: "Doctor not found" });
         }
 
-        // send acceptance email
-        const emailContent = `Dear ${doctor.name},
-        Your application to become a doctor has been approved. You can now log in and start managing your appointments.`;
-        await User.sendEmail(
-            doctor.email,
-            "Doctor Application Approved",
-            emailContent
-        );
+        const userName = doctor.user?.name || "Doctor";
+        const userEmail = doctor.user?.email;
+
+        if (!userEmail) {
+            return res.status(400).json({ message: "Doctor email not found" });
+        }
+
+        const emailContent = `Dear ${userName}, Your application to become a doctor has been approved.`;
+        await sendEmail(userEmail, "Doctor Application Approved", emailContent);
 
         res.status(200).json(doctor);
     } catch (err) {
@@ -33,9 +38,7 @@ exports.approveDoctor = async (req, res) => {
     }
 };
 
-/**
- * Add a new vaccine
- */
+// Add a new vaccine
 exports.addVaccine = async (req, res) => {
     try {
         const vaccine = new Vaccine(req.body);
@@ -45,6 +48,8 @@ exports.addVaccine = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// Get vaccine by ID
 exports.getVaccineById = async (req, res) => {
     try {
         const vaccine = await Vaccine.findById(req.params.id);
@@ -57,23 +62,21 @@ exports.getVaccineById = async (req, res) => {
     }
 };
 
-/**
- * Get all doctors
- */
+// Get all doctors (with profile info)
 exports.getDoctors = async (req, res) => {
     try {
-        const doctors = await User.find({ role: "doctor" });
-
+        const doctors = await DoctorProfile.find().populate("user");
         res.status(200).json(doctors);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
 
+// Get single doctor by user ID
 exports.getDoctorById = async (req, res) => {
     try {
         const doctor = await User.findById(req.params.id);
-        if (!doctor) {
+        if (!doctor || doctor.role !== "doctor") {
             return res.status(404).json({ message: "Doctor not found" });
         }
         res.status(200).json(doctor);
@@ -82,25 +85,24 @@ exports.getDoctorById = async (req, res) => {
     }
 };
 
-/**
- * Remove a doctor by ID
- * DELETE /api/admin/remove-doctor/:id
- */
+// Remove doctor by user ID
 exports.removeDoctor = async (req, res) => {
     try {
-        const doctor = await User.findByIdAndDelete(req.params.id);
-        if (!doctor) {
+        const user = await User.findById(req.params.id);
+        if (!user || user.role !== "doctor") {
             return res.status(404).json({ message: "Doctor not found" });
         }
+
+        await DoctorProfile.findOneAndDelete({ user: user._id });
+        await user.deleteOne();
+
         res.status(200).json({ message: "Doctor removed successfully" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
 
-/**
- * Delete a vaccine by ID
- */
+// Delete vaccine by ID
 exports.deleteVaccine = async (req, res) => {
     try {
         const vaccine = await Vaccine.findByIdAndDelete(req.params.id);
@@ -113,9 +115,7 @@ exports.deleteVaccine = async (req, res) => {
     }
 };
 
-/**
- * Get dashboard numbers
- */
+// Get dashboard stats
 exports.allnumbersControllers = async (req, res) => {
     try {
         const totalPatients = await User.countDocuments({ role: "patient" });
@@ -136,17 +136,31 @@ exports.allnumbersControllers = async (req, res) => {
     }
 };
 
-/**
- * Get all all users
- */
-
+// Get all users
 exports.getAllUsers = async (req, res) => {
     try {
         const allUser = await User.find();
-        if (!allUser) {
+        if (!allUser.length) {
             return res.status(404).json({ message: "No users found" });
         }
         res.status(200).json(allUser);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get all unapproved doctors (from DoctorProfile)
+exports.getUnapprovedDoctors = async (req, res) => {
+    try {
+        const unapprovedDoctors = await DoctorProfile.find({
+            isApproved: false,
+        }).populate("user");
+        if (!unapprovedDoctors.length) {
+            return res
+                .status(404)
+                .json({ message: "No unapproved doctors found" });
+        }
+        res.status(200).json(unapprovedDoctors);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

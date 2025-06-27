@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const Vaccine = require("../models/Vaccine");
 const DoctorProfile = require("../models/DoctorProfile");
@@ -7,11 +8,6 @@ const sendEmail = require("../utils/sendEmail");
 // Approve a doctor
 exports.approveDoctor = async (req, res) => {
     try {
-        console.log(
-            "Received request to approve doctor with ID:",
-            req.params.id
-        );
-
         const doctor = await DoctorProfile.findByIdAndUpdate(
             req.params.id,
             { isApproved: true },
@@ -66,38 +62,53 @@ exports.getVaccineById = async (req, res) => {
 exports.getDoctors = async (req, res) => {
     try {
         const doctors = await DoctorProfile.find().populate("user");
-        res.status(200).json(doctors);
+
+        const approvedDoctors = doctors.filter((doc) => doc.isApproved);
+
+        res.status(200).json(approvedDoctors); // return only approved doctors
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
 
-// Get single doctor by user ID
-exports.getDoctorById = async (req, res) => {
-    try {
-        const doctor = await User.findById(req.params.id);
-        if (!doctor || doctor.role !== "doctor") {
-            return res.status(404).json({ message: "Doctor not found" });
-        }
-        res.status(200).json(doctor);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
+// Get doctor by ID
 
 // Remove doctor by user ID
+
 exports.removeDoctor = async (req, res) => {
+    // Start a session for transaction handling
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const user = await User.findById(req.params.id);
+        // Find the user by ID passed in the URL params
+        const user = await User.findById(req.params.id).session(session);
+
+        // Check if the user exists and is a doctor
         if (!user || user.role !== "doctor") {
             return res.status(404).json({ message: "Doctor not found" });
         }
 
-        await DoctorProfile.findOneAndDelete({ user: user._id });
-        await user.deleteOne();
+        // Remove the doctor's profile
+        await DoctorProfile.findOneAndDelete({ user: user._id }).session(
+            session
+        );
 
+        // Delete the user (doctor)
+        await user.deleteOne({ session }); // Pass session for transactional operation
+
+        // Commit the transaction
+        await session.commitTransaction();
+        session.endSession();
+
+        // Send success response
         res.status(200).json({ message: "Doctor removed successfully" });
     } catch (err) {
+        // If something goes wrong, abort the transaction
+        await session.abortTransaction();
+        session.endSession();
+
+        // Send error response
         res.status(500).json({ error: err.message });
     }
 };
@@ -161,6 +172,21 @@ exports.getUnapprovedDoctors = async (req, res) => {
                 .json({ message: "No unapproved doctors found" });
         }
         res.status(200).json(unapprovedDoctors);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Remove user by ID
+exports.removeUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        await user.deleteOne();
+        res.status(200).json({ message: "User removed successfully" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -11,6 +11,7 @@ const {
     getVaccineById,
     getAllUsers,
     getUnapprovedDoctors,
+    removeUser,
 } = require("../controllers/adminController");
 // const { authMiddleware, adminOnly } = require("../middleware/authMiddleware");
 
@@ -20,7 +21,6 @@ router.put("/approve-doctor/:id", approveDoctor);
 
 router.delete("/remove-doctor/:id", removeDoctor);
 router.get("/doctors", getDoctors);
-router.get("/doctor/:id", getDoctorById);
 router.get("/unapproved-doctors", getUnapprovedDoctors);
 
 // Vaccine
@@ -33,4 +33,5 @@ router.get("/all-numbers", allnumbersControllers);
 
 // All Users deta route
 router.get("/all-users", getAllUsers);
+router.delete("/remove-user/:id", removeUser);
 module.exports = router;

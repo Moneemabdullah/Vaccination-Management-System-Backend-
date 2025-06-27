@@ -5,10 +5,12 @@ const {
     getApprovedDoctors,
     getVaccines,
     herocardController,
+    getDoctorById,
 } = require("../controllers/landingPagecontroller");
 
 router.get("/doctors", getApprovedDoctors);
 router.get("/vaccines", getVaccines);
 router.get("/heroCard", herocardController);
+router.get("/doctor/:id", getDoctorById);
 
 module.exports = router;

@@ -82,7 +82,7 @@ exports.docRegister = async (req, res) => {
         } = req.body;
 
         // Handle multipart/form-data
-        const profilePhoto = req.file?.filename || req.body.profilePhoto;
+        const profilePicture = req.file?.filename || req.body.profilePhoto;
         const parsedQualifications = Array.isArray(qualifications)
             ? qualifications
             : qualifications?.split(",").map((q) => q.trim()) || [];

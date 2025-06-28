@@ -3,6 +3,7 @@ const DoctorProfile = require("../models/DoctorProfile");
 const mongoose = require("mongoose");
 const Vaccine = require("../models/Vaccine");
 const Appointments = require("../models/Appointment");
+const { ObjectId } = require("mongoose").Types;
 
 exports.getApprovedDoctors = async (req, res) => {
     try {
@@ -65,6 +66,29 @@ exports.getDoctorById = async (req, res) => {
         }
 
         res.status(200).json(doctorProfile);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getUserbyId = async (req, res) => {
+    try {
+        // Validate ObjectId
+        if (!ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: "Invalid ID format" });
+        }
+
+        // Use .lean() to convert Mongoose Document to plain JS object
+        const user = await User.findById(req.params.id)
+            .select("-password")
+            .lean();
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json(user);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });

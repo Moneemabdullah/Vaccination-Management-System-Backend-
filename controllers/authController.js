@@ -26,11 +26,10 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: "Email already registered." });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
             name,
             email,
-            password: hashedPassword,
+            password,
             role,
         });
         await newUser.save();
@@ -110,11 +109,10 @@ exports.docRegister = async (req, res) => {
                 .json({ error: "User already exists with this email." });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
             name,
             email,
-            password: hashedPassword,
+            password,
             role: "doctor",
         });
         await newUser.save();
@@ -157,7 +155,7 @@ exports.docRegister = async (req, res) => {
         });
     }
 };
-
+// Login for all users
 // Login for all users
 exports.login = async (req, res) => {
     try {
@@ -174,7 +172,8 @@ exports.login = async (req, res) => {
             return res.status(401).json({ error: "Invalid credentials" });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await user.comparePassword(password);
+
         if (!isMatch) {
             return res.status(401).json({ error: "Invalid credentials" });
         }

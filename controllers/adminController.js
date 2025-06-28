@@ -71,44 +71,31 @@ exports.getDoctors = async (req, res) => {
     }
 };
 
-// Get doctor by ID
-
-// Remove doctor by user ID
-
 exports.removeDoctor = async (req, res) => {
-    // Start a session for transaction handling
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        // Find the user by ID passed in the URL params
         const user = await User.findById(req.params.id).session(session);
 
-        // Check if the user exists and is a doctor
         if (!user || user.role !== "doctor") {
             return res.status(404).json({ message: "Doctor not found" });
         }
 
-        // Remove the doctor's profile
         await DoctorProfile.findOneAndDelete({ user: user._id }).session(
             session
         );
 
-        // Delete the user (doctor)
-        await user.deleteOne({ session }); // Pass session for transactional operation
+        await user.deleteOne({ session });
 
-        // Commit the transaction
         await session.commitTransaction();
         session.endSession();
 
-        // Send success response
         res.status(200).json({ message: "Doctor removed successfully" });
     } catch (err) {
-        // If something goes wrong, abort the transaction
         await session.abortTransaction();
         session.endSession();
 
-        // Send error response
         res.status(500).json({ error: err.message });
     }
 };

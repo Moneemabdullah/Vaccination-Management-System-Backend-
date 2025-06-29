@@ -4,7 +4,9 @@ const {
     getAppointments,
     updateAppointmentStatus,
     getPatientMedicalHistory,
+    updateDocProfile,
 } = require("../controllers/doctorController");
+const { getDoctorById } = require("../controllers/landingPagecontroller");
 
 // const { authMiddleware, doctorOnly } = require("../middleware/authMiddleware");
 
@@ -18,5 +20,8 @@ router.put("/appointment/:id", updateAppointmentStatus);
 
 // GET patient medical history
 router.get("/patient-history/:patientId", getPatientMedicalHistory);
+// profile of doctor
+router.get("/Profile/:id", getDoctorById);
+router.put("/updateProfile/:id", updateDocProfile);
 
 module.exports = router;

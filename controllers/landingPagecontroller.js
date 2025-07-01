@@ -47,6 +47,8 @@ exports.getDoctorById = async (req, res) => {
     try {
         const doctorId = req.params.id;
 
+        console.log(req.params);
+
         if (!doctorId) {
             return res.status(400).json({ message: "Doctor ID is required" });
         }

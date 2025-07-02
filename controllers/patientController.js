@@ -3,7 +3,8 @@ const User = require("../models/User");
 const Vaccine = require("../models/Vaccine");
 const MedicalHistory = require("../models/MedicalHistory");
 const sendEmail = require("../utils/sendEmail");
-const patientProfile = require("../models/PaitentProfile");
+const vaccination = require("../models/Vaccination");
+const PatientProfile = require("../models/PaitentProfile");
 
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
@@ -80,24 +81,35 @@ exports.getMyMedicalHistory = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
-exports.getMyProfile = async (req, res) => {
+exports.getPatientProfileById = async (req, res) => {
     try {
-        const patient = await patientProfile
-            .findOne({ user: req.user._id })
-            .populate("user", "name email")
-            .populate("vaccinationHistory.vaccine", "name");
+        const patientId = req.params.user.id; // Patient ID from the route parameters
+
+        // Find the patient profile by the provided patient ID
+        const patient = await PatientProfile.findOne({ _id: patientId })
+            .populate("user", "name email role") // Populate user fields (name, email, role)
+            .populate({
+                path: "vaccinationHistory", // Populate vaccination history
+                populate: {
+                    path: "vaccine", // Populate vaccine reference
+                    select: "name manufacturer description", // Select relevant vaccine fields
+                },
+            });
+
+        // If no patient found, return a 404 error
         if (!patient) {
             return res
                 .status(404)
                 .json({ message: "Patient profile not found" });
         }
+
+        // Respond with the patient profile data
         res.json(patient);
     } catch (err) {
+        // Handle any errors that occur
         res.status(500).json({ error: err.message });
     }
 };
-
 // Update own profile
 exports.updateMyProfile = async (req, res) => {
     try {

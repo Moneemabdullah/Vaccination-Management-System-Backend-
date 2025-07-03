@@ -56,16 +56,33 @@ exports.getMyAppointments = async (req, res) => {
 // Update or create medical history
 exports.updateMedicalHistory = async (req, res) => {
     try {
+        // ensure allergies & chronicDiseases are arrays if they exist
+        if (req.body.allergies && !Array.isArray(req.body.allergies)) {
+            return res
+                .status(400)
+                .json({ error: "Allergies must be an array." });
+        }
+        if (
+            req.body.chronicDiseases &&
+            !Array.isArray(req.body.chronicDiseases)
+        ) {
+            return res
+                .status(400)
+                .json({ error: "Chronic diseases must be an array." });
+        }
+
         const history = await MedicalHistory.findOneAndUpdate(
             { patient: req.user._id },
-            req.body,
+            { ...req.body, patient: req.user._id },
             { upsert: true, new: true }
-        );
+        ).populate("vaccinationHistory.vaccine");
+
         res.json(history);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
 // Get own medical history
 exports.getMyMedicalHistory = async (req, res) => {
     try {

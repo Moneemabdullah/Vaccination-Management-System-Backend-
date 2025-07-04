@@ -4,6 +4,7 @@ const Vaccine = require("../models/Vaccine");
 const DoctorProfile = require("../models/DoctorProfile");
 const Appointment = require("../models/Appointment");
 const sendEmail = require("../utils/sendEmail");
+const PatientProfile = require("../models/PatientProfile");
 
 // Approve a doctor
 exports.approveDoctor = async (req, res) => {
@@ -166,15 +167,33 @@ exports.getUnapprovedDoctors = async (req, res) => {
 
 // Remove user by ID
 exports.removeUser = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findById(req.params.id).session(session);
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            throw new Error("User not found");
         }
 
-        await user.deleteOne();
-        res.status(200).json({ message: "User removed successfully" });
+        if (user.role === "doctor") {
+            await DoctorProfile.findOneAndDelete({ user: user._id }).session(session);
+        } else if (user.role === "patient") {
+            await PatientProfile.findOneAndDelete({ user: user._id }).session(session);
+        }
+
+        await user.deleteOne({ session });
+
+        await session.commitTransaction();
+        res.status(200).json({ message: "User and related profile removed successfully" });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        await session.abortTransaction();
+        const status = err.message === "User not found" ? 404 : 500;
+        res.status(status).json({ error: err.message });
+    } finally {
+        session.endSession();
     }
 };
+
+
+

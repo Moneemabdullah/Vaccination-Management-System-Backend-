@@ -4,19 +4,21 @@ const {
     bookAppointment,
     getMyAppointments,
     updateMedicalHistory,
-    getMyMedicalHistory,
+    getMedicalHistoryByUserId,
     getPatientProfileById,
     updateMyProfile,
 } = require("../controllers/patientController");
 
 // const { authMiddleware, patientOnly } = require("../middleware/authMiddleware");
 
+// // Protect all routes under this router for logged-in patients only
 // router.use(authMiddleware, patientOnly);
 
 router.post("/appointment", bookAppointment);
 router.get("/appointments", getMyAppointments);
-router.put("/medical-history", updateMedicalHistory);
-router.get("/medical-history", getMyMedicalHistory);
+router.post("/medical-history/update/:id", updateMedicalHistory);
+router.get("/medical-history/:userId", getMedicalHistoryByUserId);
 router.get("/getprofile/:id", getPatientProfileById);
-router.get("/update-profile/:id", updateMyProfile); // Assuming this is for updating profile
+router.put("/update-profile", updateMyProfile); // Changed from GET to PUT
+
 module.exports = router;

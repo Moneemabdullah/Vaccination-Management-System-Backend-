@@ -4,6 +4,8 @@ const Vaccine = require("../models/Vaccine");
 const MedicalHistory = require("../models/MedicalHistory");
 const sendEmail = require("../utils/sendEmail");
 const PatientProfile = require("../models/PaitentProfile");
+const mongoose = require("mongoose");
+
 
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
@@ -56,7 +58,16 @@ exports.getMyAppointments = async (req, res) => {
 // Update or create medical history
 exports.updateMedicalHistory = async (req, res) => {
     try {
-        // ensure allergies & chronicDiseases are arrays if they exist
+        const patientId = req.params.id;
+
+        // Validate the patient ID format (optional but recommended)
+
+
+        if (!patientId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ error: "Invalid patient ID." });
+        }
+
+        // Ensure allergies & chronicDiseases are arrays if they exist
         if (req.body.allergies && !Array.isArray(req.body.allergies)) {
             return res
                 .status(400)
@@ -72,8 +83,8 @@ exports.updateMedicalHistory = async (req, res) => {
         }
 
         const history = await MedicalHistory.findOneAndUpdate(
-            { patient: req.user._id },
-            { ...req.body, patient: req.user._id },
+            { patient: patientId },
+            { ...req.body, patient: patientId },
             { upsert: true, new: true }
         ).populate("vaccinationHistory.vaccine");
 
@@ -83,17 +94,31 @@ exports.updateMedicalHistory = async (req, res) => {
     }
 };
 
+
 // Get own medical history
-exports.getMyMedicalHistory = async (req, res) => {
-    try {
-        const history = await MedicalHistory.findOne({
-            patient: req.user._id,
-        }).populate("vaccinationHistory.vaccine", "name");
-        res.json(history || {});
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+exports.getMedicalHistoryByUserId = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+            console.log("Received userId:", userId);
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "Invalid user ID" });
     }
+
+    const history = await MedicalHistory.findOne({ patient: userId })
+      .populate("vaccinationHistory.vaccine", "name");
+
+    if (!history) {
+      return res.status(404).json({ error: "Medical history not found" });
+    }
+
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
+
+
 
 exports.getPatientProfileById = async (req, res) => {
     try {

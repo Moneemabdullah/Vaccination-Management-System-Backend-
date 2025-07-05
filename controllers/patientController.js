@@ -6,39 +6,49 @@ const sendEmail = require("../utils/sendEmail");
 const PatientProfile = require("../models/PaitentProfile");
 const mongoose = require("mongoose");
 
-
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
     try {
-        const { doctorId, vaccineId, date } = req.body;
+        const { doctor, vaccine, date, time, reason } = req.body;
+
         const appointment = new Appointment({
-            doctor: doctorId,
+            doctor,
             patient: req.user._id,
-            vaccine: vaccineId,
+            vaccine,
             date,
+            time,
+            reason,
         });
+
         await appointment.save();
 
         // Notify doctor and patient
-        const doctor = await User.findById(doctorId);
-        const patient = await User.findById(req.user._id); // safer than using `req.user` directly
+        const doctorUser = await User.findById(doctor);
+        const patientUser = await User.findById(req.user._id);
 
         await sendEmail(
-            doctor.email,
+            doctorUser.email,
             "New Appointment Request",
-            `<p>Hi Dr. ${doctor.name},</p>
-         <p>You have a new appointment request from ${patient.name} for ${date}.</p>`
+            `<p>Hi Dr. ${doctorUser.name},</p>
+            <p>You have a new appointment request from ${
+                patientUser.name
+            } for ${date} at ${time}.</p>
+            <p>Reason: ${reason || "Not specified"}</p>`
         );
 
         await sendEmail(
-            patient.email,
+            patientUser.email,
             "Appointment Booked",
-            `<p>Hi ${patient.name},</p>
-         <p>Your appointment with Dr. ${doctor.name} has been requested for ${date}.</p>`
+            `<p>Hi ${patientUser.name},</p>
+            <p>Your appointment with Dr. ${
+                doctorUser.name
+            } has been requested for ${date} at ${time}.</p>
+            <p>Reason: ${reason || "Not specified"}</p>`
         );
 
         res.status(201).json(appointment);
     } catch (err) {
+        console.error("Error booking appointment:", err);
         res.status(500).json({ error: err.message });
     }
 };
@@ -61,7 +71,6 @@ exports.updateMedicalHistory = async (req, res) => {
         const patientId = req.params.id;
 
         // Validate the patient ID format (optional but recommended)
-
 
         if (!patientId.match(/^[0-9a-fA-F]{24}$/)) {
             return res.status(400).json({ error: "Invalid patient ID." });
@@ -94,31 +103,29 @@ exports.updateMedicalHistory = async (req, res) => {
     }
 };
 
-
 // Get own medical history
 exports.getMedicalHistoryByUserId = async (req, res) => {
-  try {
-    const userId = req.params.userId;
-            console.log("Received userId:", userId);
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ error: "Invalid user ID" });
+    try {
+        const userId = req.params.userId;
+        console.log("Received userId:", userId);
+        // Validate ObjectId
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ error: "Invalid user ID" });
+        }
+
+        const history = await MedicalHistory.findOne({
+            patient: userId,
+        }).populate("vaccinationHistory.vaccine", "name");
+
+        if (!history) {
+            return res.status(404).json({ error: "Medical history not found" });
+        }
+
+        res.json(history);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    const history = await MedicalHistory.findOne({ patient: userId })
-      .populate("vaccinationHistory.vaccine", "name");
-
-    if (!history) {
-      return res.status(404).json({ error: "Medical history not found" });
-    }
-
-    res.json(history);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 };
-
-
 
 exports.getPatientProfileById = async (req, res) => {
     try {

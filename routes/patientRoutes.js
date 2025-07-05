@@ -15,7 +15,7 @@ const {
 // router.use(authMiddleware, patientOnly);
 
 router.post("/appointment", bookAppointment);
-router.get("/appointments", getMyAppointments);
+router.get("/appointments/:id", getMyAppointments);
 router.post("/medical-history/update/:id", updateMedicalHistory);
 router.get("/medical-history/:userId", getMedicalHistoryByUserId);
 router.get("/getprofile/:id", getPatientProfileById);

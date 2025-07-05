@@ -6,14 +6,14 @@ const sendEmail = require("../utils/sendEmail");
 const PatientProfile = require("../models/PaitentProfile");
 const mongoose = require("mongoose");
 
-// Book an appointment
 exports.bookAppointment = async (req, res) => {
     try {
-        const { doctor, vaccine, date, time, reason } = req.body;
+        const { doctor, patient, vaccine, date, time, reason } = req.body;
 
+        // Create appointment
         const appointment = new Appointment({
             doctor,
-            patient: req.user._id,
+            patient,
             vaccine,
             date,
             time,
@@ -24,7 +24,7 @@ exports.bookAppointment = async (req, res) => {
 
         // Notify doctor and patient
         const doctorUser = await User.findById(doctor);
-        const patientUser = await User.findById(req.user._id);
+        const patientUser = await User.findById(patient);
 
         await sendEmail(
             doctorUser.email,
@@ -56,9 +56,16 @@ exports.bookAppointment = async (req, res) => {
 // View my appointments
 exports.getMyAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find({ patient: req.user._id })
+        const patientId = req.params.id;
+
+        if (!patientId) {
+            return res.status(400).json({ error: "Patient ID is required" });
+        }
+
+        const appointments = await Appointment.find({ patient: patientId })
             .populate("doctor", "name email")
             .populate("vaccine", "name");
+
         res.json(appointments);
     } catch (err) {
         res.status(500).json({ error: err.message });

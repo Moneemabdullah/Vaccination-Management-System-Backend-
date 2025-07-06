@@ -9,13 +9,13 @@ const doctorProfileSchema = new mongoose.Schema({
     certifications: [{ type: String }],
     workingDays: [
         {
-            day: { type: String },
-            startTime: { type: String },
-            endTime: { type: String },
+            type: String,
         },
     ],
     isApproved: { type: Boolean, default: false },
     rating: { type: Number, default: 0 },
 });
 
-module.exports = mongoose.models.DoctorProfile || mongoose.model("DoctorProfile", doctorProfileSchema);
+module.exports =
+    mongoose.models.DoctorProfile ||
+    mongoose.model("DoctorProfile", doctorProfileSchema);

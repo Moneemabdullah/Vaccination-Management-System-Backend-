@@ -4,7 +4,7 @@ const {
     getAppointments,
     updateAppointmentStatus,
     getPatientMedicalHistory,
-    updateDocProfile,
+    updateDoctorProfile,
 } = require("../controllers/doctorController");
 const { getDoctorById } = require("../controllers/landingPagecontroller");
 
@@ -22,6 +22,6 @@ router.put("/appointment/:id", updateAppointmentStatus);
 router.get("/patient-history/:patientId", getPatientMedicalHistory);
 // profile of doctor
 router.get("/Profile/:id", getDoctorById);
-router.put("/updateProfile/:id", updateDocProfile);
+router.put("/updateProfile/:id", updateDoctorProfile);
 
 module.exports = router;

@@ -1,38 +1,29 @@
 const Appointment = require("../models/Appointment");
 const User = require("../models/User");
 const MedicalHistory = require("../models/MedicalHistory");
-const sendEmail = require("../utils/sendEmail"); // <--- import sendEmail
+const sendEmail = require("../utils/sendEmail");
 const mongoose = require("mongoose");
 const DoctorProfile = require("../models/DoctorProfile");
 
-// Get all appointments for logged-in doctor
+// Get all appointments for a doctor by ID (no auth check)
 exports.getAppointments = async (req, res) => {
     try {
-        // Ensure that req.user._id exists
-        if (!req.user || !req.user._id) {
-            return res.status(400).json({ error: "User not authenticated" });
-        }
-
-        // If you want appointments for a specific doctor passed via URL parameter (i.e., /appointments/:id)
-        const doctorId = req.params.id; // Grab doctor ID from the URL parameter
+        const doctorId = req.params.id; // Use doctor ID from URL param only
 
         if (!doctorId) {
             return res.status(400).json({ error: "Doctor ID is required" });
         }
 
-        // Find appointments for the doctor (either by URL param or user data)
         const appointments = await Appointment.find({ doctor: doctorId })
-            .populate("patient", "name email") // Populate patient with name and email
-            .populate("vaccine", "name"); // Populate vaccine with name
+            .populate("patient", "name email")
+            .populate("vaccine", "name");
 
-        // If no appointments found, return a message
         if (!appointments || appointments.length === 0) {
             return res
                 .status(404)
                 .json({ message: "No appointments found for this doctor" });
         }
 
-        // Return the found appointments
         res.json(appointments);
     } catch (err) {
         console.error(err);
@@ -40,86 +31,131 @@ exports.getAppointments = async (req, res) => {
     }
 };
 
-// Update appointment status (approve/reject)
+// Update appointment status (approve/reject) without auth
 exports.updateAppointmentStatus = async (req, res) => {
     try {
-        const appointment = await Appointment.findOneAndUpdate(
-            { _id: req.params.id, doctor: req.user._id },
-            { status: req.body.status },
+        const { status } = req.body;
+        const appointmentId = req.params.id;
+
+        if (!appointmentId) {
+            return res
+                .status(400)
+                .json({ error: "Appointment ID is required" });
+        }
+
+        if (!["approved", "rejected"].includes(status)) {
+            return res.status(400).json({ error: "Invalid status value" });
+        }
+
+        // Update appointment without checking doctor ownership
+        const appointment = await Appointment.findByIdAndUpdate(
+            appointmentId,
+            { status },
             { new: true }
         )
             .populate("doctor", "name email")
             .populate("patient", "name email");
 
         if (!appointment) {
-            return res
-                .status(404)
-                .json({ message: "Appointment not found or unauthorized" });
+            return res.status(404).json({ message: "Appointment not found" });
         }
 
         // Send notification email
         await sendEmail(
             appointment.patient.email,
-            `Appointment ${req.body.status}`,
+            `Appointment ${status}`,
             `<p>Hi ${appointment.patient.name},</p>
-             <p>Your appointment with Dr. ${appointment.doctor.name} has been <strong>${req.body.status}</strong>.</p>`
+             <p>Your appointment with Dr. ${appointment.doctor.name} has been <strong>${status}</strong>.</p>`
         );
 
         res.json(appointment);
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 };
 
-// Get patient's medical history by ID
+// Get patient's medical history by ID without auth
 exports.getPatientMedicalHistory = async (req, res) => {
     try {
+        const patientId = req.params.patientId;
+
+        if (!patientId) {
+            return res.status(400).json({ error: "Patient ID is required" });
+        }
+
         const history = await MedicalHistory.findOne({
-            patient: req.params.patientId,
+            patient: patientId,
         }).populate("vaccinationHistory.vaccine", "name");
-        if (!history)
+
+        if (!history) {
             return res
                 .status(404)
                 .json({ message: "No medical history found" });
+        }
+
         res.json(history);
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 };
 
-// Update doctor profile
-exports.updateDocProfile = async (req, res) => {
+// Update doctor profile without auth
+exports.updateDoctorProfile = async (req, res) => {
     try {
-        const updates = req.body;
-        const userId = req.user._id;
+        const { id } = req.params;
+        const updatedProfile = req.body.profile;
 
-        // Update User fields
-        const user = await User.findByIdAndUpdate(userId, updates.user || {}, {
-            new: true,
-            runValidators: true,
-        }).select("-password");
-
-        if (!user) {
-            return res.status(404).json({ message: "Doctor not found" });
+        if (!id) {
+            return res.status(400).json({ message: "Doctor ID is required" });
         }
 
-        // Update DoctorProfile fields if provided
-        let doctorProfile = await DoctorProfile.findOne({ user: userId });
-        if (doctorProfile && updates.profile) {
-            Object.assign(doctorProfile, updates.profile);
-            await doctorProfile.save();
+        if (!updatedProfile) {
+            return res.status(400).json({ message: "Profile data is missing" });
         }
 
-        // Populate user field in doctorProfile for response
-        doctorProfile = await DoctorProfile.findOne({ user: userId }).populate(
-            "user"
-        );
+        const doctorProfile = await DoctorProfile.findOne({ user: id });
 
-        res.json({
-            user,
-            doctorProfile,
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+        if (!doctorProfile) {
+            return res
+                .status(404)
+                .json({ message: "Doctor profile not found" });
+        }
+
+        if (updatedProfile.specialization !== undefined) {
+            doctorProfile.specialization = updatedProfile.specialization;
+        }
+        if (updatedProfile.experience !== undefined) {
+            doctorProfile.experience = updatedProfile.experience;
+        }
+        if (updatedProfile.qualifications !== undefined) {
+            doctorProfile.qualifications = updatedProfile.qualifications;
+        }
+        if (updatedProfile.certifications !== undefined) {
+            doctorProfile.certifications = updatedProfile.certifications;
+        }
+        if (updatedProfile.workingDays !== undefined) {
+            if (
+                !Array.isArray(updatedProfile.workingDays) ||
+                !updatedProfile.workingDays.every(
+                    (day) => typeof day === "string"
+                )
+            ) {
+                return res.status(400).json({
+                    message: "workingDays must be an array of strings",
+                });
+            }
+            doctorProfile.workingDays = updatedProfile.workingDays;
+        }
+        if (updatedProfile.profilePicture !== undefined) {
+            doctorProfile.profilePicture = updatedProfile.profilePicture;
+        }
+
+        const savedProfile = await doctorProfile.save();
+        res.status(200).json({ doctorProfile: savedProfile });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error updating doctor profile" });
     }
 };

@@ -8,11 +8,34 @@ const DoctorProfile = require("../models/DoctorProfile");
 // Get all appointments for logged-in doctor
 exports.getAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find({ doctor: req.user._id })
-            .populate("patient", "name email")
-            .populate("vaccine", "name");
+        // Ensure that req.user._id exists
+        if (!req.user || !req.user._id) {
+            return res.status(400).json({ error: "User not authenticated" });
+        }
+
+        // If you want appointments for a specific doctor passed via URL parameter (i.e., /appointments/:id)
+        const doctorId = req.params.id; // Grab doctor ID from the URL parameter
+
+        if (!doctorId) {
+            return res.status(400).json({ error: "Doctor ID is required" });
+        }
+
+        // Find appointments for the doctor (either by URL param or user data)
+        const appointments = await Appointment.find({ doctor: doctorId })
+            .populate("patient", "name email") // Populate patient with name and email
+            .populate("vaccine", "name"); // Populate vaccine with name
+
+        // If no appointments found, return a message
+        if (!appointments || appointments.length === 0) {
+            return res
+                .status(404)
+                .json({ message: "No appointments found for this doctor" });
+        }
+
+        // Return the found appointments
         res.json(appointments);
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 };

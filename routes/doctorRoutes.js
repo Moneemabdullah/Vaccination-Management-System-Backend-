@@ -13,7 +13,7 @@ const { getDoctorById } = require("../controllers/landingPagecontroller");
 // router.use(authMiddleware, doctorOnly);
 
 // GET all appointments
-router.get("/appointments", getAppointments);
+router.get("/appointments/:id", getAppointments);
 
 // PUT approve/reject appointment
 router.put("/appointment/:id", updateAppointmentStatus);

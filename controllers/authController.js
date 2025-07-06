@@ -4,7 +4,8 @@ const User = require("../models/User");
 const DoctorProfile = require("../models/DoctorProfile");
 const PatientProfile = require("../models/PaitentProfile");
 
-// Register for generic users (e.g., patient)
+const MedicalHistory = require("../models/MedicalHistory"); // Import the MedicalHistory model
+
 exports.register = async (req, res) => {
     try {
         const { name, email, password, dateOfBirth, role } = req.body;
@@ -34,19 +35,31 @@ exports.register = async (req, res) => {
         });
         await newUser.save();
 
+        // Create the PatientProfile
         const patientProfile = new PatientProfile({
             user: newUser._id,
             dateOfBirth,
         });
-
         await patientProfile.save();
 
+        // Create an empty MedicalHistory
+        const medicalHistory = new MedicalHistory({
+            patient: newUser._id, // Link the patient with their medical history
+            allergies: [], // Empty initially
+            chronicDiseases: [], // Empty initially
+            medications: [], // Empty initially
+            vaccinationHistory: [], // Empty initially
+        });
+        await medicalHistory.save();
+
+        // Create a JWT token for the user
         const token = jwt.sign(
             { id: newUser._id, role: newUser.role },
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
 
+        // Respond with success message
         res.status(201).json({
             message: "Patient registered successfully",
             token,

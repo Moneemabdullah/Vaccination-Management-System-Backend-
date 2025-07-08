@@ -102,6 +102,7 @@ exports.getPatientMedicalHistory = async (req, res) => {
 };
 
 // Update doctor profile without auth
+// Update doctor profile without auth
 exports.updateDoctorProfile = async (req, res) => {
     try {
         const { id } = req.params;
@@ -115,6 +116,7 @@ exports.updateDoctorProfile = async (req, res) => {
             return res.status(400).json({ message: "Profile data is missing" });
         }
 
+        // ✅ This assumes `id` is the user._id, not DoctorProfile._id
         const doctorProfile = await DoctorProfile.findOne({ user: id });
 
         if (!doctorProfile) {
@@ -123,6 +125,7 @@ exports.updateDoctorProfile = async (req, res) => {
                 .json({ message: "Doctor profile not found" });
         }
 
+        // ✅ Only update fields if they exist in request
         if (updatedProfile.specialization !== undefined) {
             doctorProfile.specialization = updatedProfile.specialization;
         }
@@ -139,11 +142,11 @@ exports.updateDoctorProfile = async (req, res) => {
             if (
                 !Array.isArray(updatedProfile.workingDays) ||
                 !updatedProfile.workingDays.every(
-                    (day) => typeof day === "string"
+                    (day) => typeof day === "string" && day.trim() !== ""
                 )
             ) {
                 return res.status(400).json({
-                    message: "workingDays must be an array of strings",
+                    message: "workingDays must be a non-empty array of strings",
                 });
             }
             doctorProfile.workingDays = updatedProfile.workingDays;

@@ -44,22 +44,20 @@ exports.register = async (req, res) => {
 
         // Create an empty MedicalHistory
         const medicalHistory = new MedicalHistory({
-            patient: newUser._id, // Link the patient with their medical history
-            allergies: [], // Empty initially
-            chronicDiseases: [], // Empty initially
-            medications: [], // Empty initially
-            vaccinationHistory: [], // Empty initially
+            patient: newUser._id,
+            allergies: [],
+            chronicDiseases: [],
+            medications: [],
+            vaccinationHistory: [],
         });
         await medicalHistory.save();
 
-        // Create a JWT token for the user
         const token = jwt.sign(
             { id: newUser._id, role: newUser.role },
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
 
-        // Respond with success message
         res.status(201).json({
             message: "Patient registered successfully",
             token,
@@ -93,7 +91,6 @@ exports.docRegister = async (req, res) => {
             workingDays,
         } = req.body;
 
-        // Handle multipart/form-data
         const profilePicture = req.file?.filename || req.body.profilePhoto;
         const parsedQualifications = Array.isArray(qualifications)
             ? qualifications
@@ -168,7 +165,6 @@ exports.docRegister = async (req, res) => {
         });
     }
 };
-// Login for all users
 // Login for all users
 exports.login = async (req, res) => {
     try {

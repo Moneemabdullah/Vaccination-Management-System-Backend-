@@ -66,7 +66,7 @@ exports.getDoctors = async (req, res) => {
 
         const approvedDoctors = doctors.filter((doc) => doc.isApproved);
 
-        res.status(200).json(approvedDoctors); // return only approved doctors
+        res.status(200).json(approvedDoctors);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -177,15 +177,21 @@ exports.removeUser = async (req, res) => {
         }
 
         if (user.role === "doctor") {
-            await DoctorProfile.findOneAndDelete({ user: user._id }).session(session);
+            await DoctorProfile.findOneAndDelete({ user: user._id }).session(
+                session
+            );
         } else if (user.role === "patient") {
-            await PatientProfile.findOneAndDelete({ user: user._id }).session(session);
+            await PatientProfile.findOneAndDelete({ user: user._id }).session(
+                session
+            );
         }
 
         await user.deleteOne({ session });
 
         await session.commitTransaction();
-        res.status(200).json({ message: "User and related profile removed successfully" });
+        res.status(200).json({
+            message: "User and related profile removed successfully",
+        });
     } catch (err) {
         await session.abortTransaction();
         const status = err.message === "User not found" ? 404 : 500;
@@ -194,6 +200,3 @@ exports.removeUser = async (req, res) => {
         session.endSession();
     }
 };
-
-
-

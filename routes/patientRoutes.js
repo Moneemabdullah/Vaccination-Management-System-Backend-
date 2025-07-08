@@ -19,6 +19,6 @@ router.get("/appointments/:id", getMyAppointments);
 router.post("/medical-history/update/:id", updateMedicalHistory);
 router.get("/medical-history/:id", getMedicalHistoryByUserId);
 router.get("/getprofile/:id", getPatientProfileById);
-router.put("/update-profile", updateMyProfile); // Changed from GET to PUT
+router.put("/update-profile", updateMyProfile);
 
 module.exports = router;

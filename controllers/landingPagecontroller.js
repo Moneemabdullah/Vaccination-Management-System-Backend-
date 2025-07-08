@@ -47,8 +47,6 @@ exports.getDoctorById = async (req, res) => {
     try {
         const doctorId = req.params.id;
 
-        console.log(req.params);
-
         if (!doctorId) {
             return res.status(400).json({ message: "Doctor ID is required" });
         }
@@ -81,7 +79,6 @@ exports.getUserbyId = async (req, res) => {
             return res.status(400).json({ message: "Invalid ID format" });
         }
 
-        // Use .lean() to convert Mongoose Document to plain JS object
         const user = await User.findById(req.params.id)
             .select("-password")
             .lean();

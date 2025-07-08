@@ -114,18 +114,13 @@ exports.updateMedicalHistory = async (req, res) => {
 // Get own medical history
 exports.getMedicalHistoryByUserId = async (req, res) => {
     try {
-        const userId = req.params.id; // Ensure the route parameter is consistent with how you're passing the ID
-
-        console.log("Received userId:", userId);
-
-        // Validate ObjectId
+        const userId = req.params.id;
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({ error: "Invalid user ID" });
         }
 
-        // Query MedicalHistory with patient field, not userId
         const history = await MedicalHistory.findOne({
-            patient: userId, // The schema uses 'patient' to reference the user
+            patient: userId,
         }).populate("vaccinationHistory.vaccine", "name");
 
         if (!history) {
@@ -140,29 +135,23 @@ exports.getMedicalHistoryByUserId = async (req, res) => {
 
 exports.getPatientProfileById = async (req, res) => {
     try {
-        const userId = req.params.id; // userId is passed as parameter
-        console.log("Received userId:", userId);
-
-        // Fetch the PatientProfile by matching the user._id
+        const userId = req.params.id;
         const patient = await PatientProfile.findOne({
-            user: userId, // Match the `user` field to the passed userId
+            user: userId,
         }).populate("user", "name email role");
 
-        // If no patient profile found
         if (!patient) {
             return res
                 .status(404)
                 .json({ message: "Patient profile not found" });
         }
 
-        res.json(patient); // Send the patient profile
+        res.json(patient);
     } catch (err) {
-        // Catch any errors and return a 500 response
         res.status(500).json({ error: err.message });
     }
 };
 
-// Update own profile
 exports.updateMyProfile = async (req, res) => {
     try {
         const patient = await PatientProfile.findOneAndUpdate(

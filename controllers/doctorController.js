@@ -8,7 +8,7 @@ const DoctorProfile = require("../models/DoctorProfile");
 // Get all appointments for a doctor by ID (no auth check)
 exports.getAppointments = async (req, res) => {
     try {
-        const doctorId = req.params.id; // Use doctor ID from URL param only
+        const doctorId = req.params.id;
 
         if (!doctorId) {
             return res.status(400).json({ error: "Doctor ID is required" });
@@ -102,7 +102,6 @@ exports.getPatientMedicalHistory = async (req, res) => {
 };
 
 // Update doctor profile without auth
-// Update doctor profile without auth
 exports.updateDoctorProfile = async (req, res) => {
     try {
         const { id } = req.params;
@@ -116,7 +115,6 @@ exports.updateDoctorProfile = async (req, res) => {
             return res.status(400).json({ message: "Profile data is missing" });
         }
 
-        // ✅ This assumes `id` is the user._id, not DoctorProfile._id
         const doctorProfile = await DoctorProfile.findOne({ user: id });
 
         if (!doctorProfile) {
@@ -125,7 +123,6 @@ exports.updateDoctorProfile = async (req, res) => {
                 .json({ message: "Doctor profile not found" });
         }
 
-        // ✅ Only update fields if they exist in request
         if (updatedProfile.specialization !== undefined) {
             doctorProfile.specialization = updatedProfile.specialization;
         }
